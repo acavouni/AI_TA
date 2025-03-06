@@ -1,6 +1,9 @@
-# Echo Server in python3
-import mods
+## DESC: Echo Server for Mimicking AI Model Query
+## Coded by Falsedeer (Yu-Kuang, Chen)
+## CopyRight (C) All Rights Reserved
+
 import socket
+import mods
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # tcp
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
