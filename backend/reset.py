@@ -13,9 +13,23 @@ if __name__ == "__main__":
     users_table.insert({"user_id": "chen5292", "email": "chen5292@purdue.edu", "password": "apple123"})
     users_table.insert({"user_id": "chou610", "email": "chou610@purdue.edu", "password": "banana666"})
 
-    # initialize dummp login session entry in table `sessions`
+    # initialize dummy login session entry in table `sessions`
     sessions_table = db.table("sessions")
     sessions_table.insert({"user_id": "chen5292", "token": "27aeeb13-a72c-45f6-90eb-bc97fbb36767", "expires_at": 1741745471.295948})
+
+    # initialize dummy char folders in table `chat_folders`
+    chat_folders_table = db.table("chat_folders")
+    chat_folders_table.insert({"user_id": "chen5292", "folders": [{"label": "Assignment 1", "chat_ids": []}, {"label": "Assignment 2", "chat_id": []}]})
+    chat_folders_table.insert({"user_id": "chou610", "folders": [{"label": "Assignment 1", "chat_ids": ["5439494f-b9be-4f81-b242-56eecc8c1841"]}, {"label": "Assignment 2", "chat_id": []}]})
+
+    # initialize chat history in table 'chat_logs'
+    chat_logs_table = db.table("chat_logs")
+    chat_logs_table.insert({"chat_id": "5439494f-b9be-4f81-b242-56eecc8c1841",
+                            "messages": [{"sender": "chen5292", "message": "How are you ?", "timestamp": 1741287392.308209},
+                                         {"sender": "AI-Model", "message": "I am fine, thank you !", "timestamp": 1741287392.308209},
+                                         {"sender": "chen5292", "message": "How is the weather like in Lafayette ?", "timestamp": 1741287392.308209},
+                                         {"sender": "AI-Model", "message": "It will probably rain in the afternoon !!", "timestamp": 1741287395.279668}
+                                        ]})
 
     # dump the whole database
     print("[Table Dump]:\n{}\n".format(db.tables()))
