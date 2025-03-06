@@ -1,3 +1,7 @@
+## DESC: Echo Server for Mimicking AI Model Query
+## Coded by Falsedeer (Yu-Kuang, Chen)
+## CopyRight (C) All Rights Reserved
+
 def hexdump(string, step):
     result = []
     for x in range(0, len(string), step):
