@@ -1,1 +1,1 @@
-{"_default": {}, "users": {"1": {"username": "chen5292", "email": "chen5292@purdue.edu", "password": "apple123"}, "2": {"username": "chou610", "email": "chou610@purdue.edu", "password": "banana666"}}}
+{"_default": {}, "users": {"1": {"user_id": "chen5292", "email": "chen5292@purdue.edu", "password": "apple123"}, "2": {"user_id": "chou610", "email": "chou610@purdue.edu", "password": "banana666"}}, "sessions": {"1": {"user_id": "chen5292", "token": "27aeeb13-a72c-45f6-90eb-bc97fbb36767", "expires_at": 1741745471.295948}}}
