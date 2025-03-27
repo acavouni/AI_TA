@@ -48,12 +48,20 @@ class DatabaseAgent:
 
 	def termiante_session(self, username: str, token: str) -> bool:
 		""" Termiante an UUID-V4 session token of user """
-		pass
+		# check if the user & session exist in the database
+		removed_doc_id = self.sessions.remove((Query().user_id == username) & (Query().token == token))
+		return True if removed_doc_id else False
 
 
 	def verify_session(self, username: str, token: str) -> bool:
 		""" Verify a session token of the user """
-		pass
+		# check whether the session exist in the database
+		session = self.sessions.get((Query().user_id == username) & (Query().token == token))
+		if not session: return False
+
+		# check if session expired
+		current = datetime.now(UTC).timestamp()
+		return current < session.get("expires_at", 0)
 
 
 	def get_folders(self, username: str) -> dict[str, list[str]]:
