@@ -6,9 +6,6 @@ from tinydb import TinyDB, Query
 
 
 
-
-
-
 class BackendServer:
 	def __init__(self):
 		pass
