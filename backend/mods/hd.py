@@ -1,5 +1,5 @@
 ## DESC: Echo Server for Mimicking AI Model Query
-## Coded by Falsedeer (Yu-Kuang, Chen)
+## Coded by Falsedeer (Yu-Kuang Chen)
 ## CopyRight (C) All Rights Reserved
 
 def hexdump(string, step):

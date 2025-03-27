@@ -1,5 +1,5 @@
 ## DESC: Database Reset/Initialize File with Entry Samples
-## Coded by Falsedeer (Yu-Kuang, Chen)
+## Coded by Falsedeer (Yu-Kuang Chen)
 ## CopyRight (C) All Rights Reserved
 
 from tinydb import TinyDB, Query
