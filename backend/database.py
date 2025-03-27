@@ -29,6 +29,10 @@ class DatabaseAgent:
 		else: return False
 
 
+	def delete_user(self, username: str):
+		pass
+
+
 	def create_session(self, username: str) -> str|None:
 		""" Create an UUID-V4 token for the session """
 		# verify whether the user exist before operation
@@ -64,18 +68,40 @@ class DatabaseAgent:
 		return current < session.get("expires_at", 0)
 
 
-	def get_folders(self, username: str) -> dict[str, list[str]]:
-		""" Return a list of UUID for the folders """
+	def get_folders(self, username: str) -> dict[str, list[str]]|None:
+		""" Return a list folders name and the chat_ids inside it """
+		user_folders = self.chat_folders.get(Query().user_id == username)
+		if not user_folders: return None
+		folders = user_folders.get("folders", [])
+		if not folders: return None
+		
+		# parse the folder and chat_ids
+		result: dict[str, list[str]] = {}
+		for folder in folders:
+			label = folder.get("label")
+			chat_ids = folder.get("chat_ids", [])
+			if label: result[label] = chat_ids
+
+		return result
+
+
+	def organize_chat(self, username: str, chat_id: str, folder: str) -> bool:
+		""" Organize a chat into a speicied folder under the username """
 		pass
 
 
-	def get_chat(self, username: str, chat_id: str) -> list[dict[str, Any]]:
-		""" Return a list of dictionary for the specified chatlog """
+	def get_chat(self, chat_id: str) -> list[dict[str, Any]]:
+		""" Return a list of dictionary for the specified chat log """
+		pass
+
+
+	def delete_chat(self, chat_id: str) -> bool:
+		""" Delete a chat log based on the chat_id """
 		pass
 
 
 
 if __name__ == "__main__":
 	agent = DatabaseAgent("database.json")
-	token = agent.create_session("chen5292")
-	print("Token: ", token)
+	folders = agent.get_folders("chou610")
+	print(folders)
