@@ -5,7 +5,10 @@ app = Flask(__name__)
 #some test database below (we will later move to postgresql or firebase)
 users = {
     "testuser":"password123",
-    "admin":"securepass"}
+    "admin":"securepass",
+    "Paul_Cavounis":"VIP123"
+    }
+
 active_sessions = {}
 
 
@@ -43,6 +46,19 @@ def query():
     response = f"Question Received! '{user_query}', will later respond with RAG system."
     return jsonify({"response": response})
 
+"""
+
+think further about how we will connect the button push of react which connects to the backend
+think of how we can start to implement a database, and how our api enpoint will combine with the ai model for a response
+
+"""
+
+
+
+
+
+
+
 
 @app.route("/logout", methods=["POST"])
 def logout():
@@ -69,6 +85,10 @@ def refresh():
 def fetch_document(doc_id):
     #should actually look up the database
     return jsonify({"document_id": doc_id, "content": "Document content goes here"})
+
+
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
