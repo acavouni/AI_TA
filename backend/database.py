@@ -1,6 +1,7 @@
 import uuid
 from typing import Any
 from tinydb import TinyDB, Query
+from tinydb.operations import set
 from datetime import datetime, timedelta, UTC
 
 
@@ -16,7 +17,8 @@ class DatabaseAgent:
 	def register_user(self, username: str, email: str, password: str) -> bool:
 		""" Create a new entry of user in the database """
 		doc_id = self.user.insert({"user_id": username, "email": email, "password": password})
-		return True if doc_id else False
+		
+		# if user create success, setup default entry of session and folders
 
 
 	def verify_user(self, username: str, password: str) -> bool:
@@ -33,10 +35,10 @@ class DatabaseAgent:
 		pass
 
 
-	def create_session(self, username: str) -> str|None:
+	def create_session(self, owner_id: str) -> str|None:
 		""" Create an UUID-V4 token for the session """
 		# verify whether the user exist before operation
-		if not self.users.contains(Query().user_id == username): return None
+		if not self.users.contains(Query().user_id == owner_id): return None
 
 		# token creation
 		session_token = str(uuid.uuid4())
@@ -46,21 +48,21 @@ class DatabaseAgent:
 		expire = expiration_time.timestamp()
 
 		# insert the entry to the database
-		doc_id = self.sessions.insert({"user_id": username, "token": session_token, "expires_at": expire})
-		return session_token if doc_id else None
+		self.sessions.insert({"user_id": owner_id, "token": session_token, "expires_at": expire})
+		return session_token
 
 
-	def termiante_session(self, username: str, token: str) -> bool:
+	def termiante_session(self, owner_id: str, token: str) -> bool:
 		""" Termiante an UUID-V4 session token of user """
 		# check if the user & session exist in the database
-		removed_doc_id = self.sessions.remove((Query().user_id == username) & (Query().token == token))
+		removed_doc_id = self.sessions.remove((Query().user_id == owner_id) & (Query().token == token))
 		return True if removed_doc_id else False
 
 
-	def verify_session(self, username: str, token: str) -> bool:
+	def verify_session(self, owner_id: str, token: str) -> bool:
 		""" Verify a session token of the user """
 		# check whether the session exist in the database
-		session = self.sessions.get((Query().user_id == username) & (Query().token == token))
+		session = self.sessions.get((Query().user_id == owner_id) & (Query().token == token))
 		if not session: return False
 
 		# check if session expired
@@ -68,9 +70,9 @@ class DatabaseAgent:
 		return current < session.get("expires_at", 0)
 
 
-	def get_folders(self, username: str) -> dict[str, list[str]]|None:
+	def get_folders(self, owner_id: str) -> dict[str, list[str]]|None:
 		""" Return a list folders name and the chat_ids inside it """
-		user_folders = self.chat_folders.get(Query().user_id == username)
+		user_folders = self.chat_folders.get(Query().user_id == owner_id)
 		if not user_folders: return None
 		folders = user_folders.get("folders", [])
 		if not folders: return None
@@ -85,23 +87,100 @@ class DatabaseAgent:
 		return result
 
 
-	def organize_chat(self, username: str, chat_id: str, folder: str) -> bool:
+	def organize_chat(self, chat_id: str, folder_name: str) -> bool:
 		""" Organize a chat into a speicied folder under the username """
-		pass
+		# receive the owner of the chat
+		chat_entry = self.chat_logs.get(Query().chat_id == chat_id)
+		if not chat_entry: return False
+		owner_id = chat_entry.get("user_id")
+
+		# receive the user's chat folder information
+		user_entry = self.chat_folders.get(Query().user_id == owner_id)
+		if not user_entry: return False
+
+		# locate the "folders" field
+		folders = user_entry.get("folders", [])
+		if not folders: return False
+
+		# append the chat_id under the correct label
+		for folder in folders:
+			if folder.get("label") == folder_name:
+				chat_ids = folder.setdefault("chat_ids", [])
+				if chat_id not in chat_ids: chat_ids.append(chat_id)
+				break
+
+		# update the entry for user
+		self.chat_folders.update(set("folders", folders), Query().user_id == owner_id)
+		return True
 
 
-	def get_chat(self, chat_id: str) -> list[dict[str, Any]]:
+	def get_chat_history(self, chat_id: str) -> list[dict[str, Any]]|None:
 		""" Return a list of dictionary for the specified chat log """
-		pass
+		chat_entry = self.chat_logs.get(Query().chat_id == chat_id)
+		if not chat_entry: return None
+		return chat_entry.get("messages", [])
+
+
+	def create_chat(self, owner_id: str) -> str:
+		""" Create an UUID-V4 chat_id and setup empty entry in `chat_log` table """
+		chat_id = str(uuid.uuid4())
+		self.chat_logs.insert({"chat_id": chat_id, "user_id": owner_id, "messages": []})
+		return chat_id
+
+
+	def log_chat(self, chat_id: str, sender: str, message: str) -> bool:
+		""" Add a new message from sender into the specified chat_id """
+		chat_entry = self.chat_logs.get(Query().chat_id == chat_id)
+		if not chat_entry: return False
+
+		# construct the new message
+		new_message = {
+			"timestamp": datetime.now(UTC).timestamp(),
+			"sender": sender,
+			"message": message
+		}
+
+		# insert the new message, update the chat_logs table
+		messages = chat_entry.setdefault("messages", [])
+		messages.append(new_message)
+		self.chat_logs.update(set("messages", messages), Query().chat_id == chat_id)
+		return True
 
 
 	def delete_chat(self, chat_id: str) -> bool:
 		""" Delete a chat log based on the chat_id """
-		pass
+		chat_entry = self.chat_logs.get(Query().chat_id == chat_id)
+		if not chat_entry: return False
+
+		# get owner of the chat
+		owner_id = chat_entry.get("user_id")
+		if not owner_id: return False
+
+		# locate the owner's folder
+		folders_entry = self.chat_folders.get(Query().user_id == owner_id)
+		if not folders_entry: return False
+		folders = folders_entry.get("folders", [])
+
+		# remove the taret chat_id from the folder
+		for folder in folders:
+			chat_ids = folder.get("chat_ids", [])
+			if chat_id in chat_ids:
+				chat_ids.remove(chat_id)
+				self.chat_folders.update(set("folders", folders), Query().user_id == owner_id)
+
+		# delete the chat from chat_logs
+		self.chat_logs.remove(Query().chat_id == chat_id)
+		return True
 
 
 
 if __name__ == "__main__":
 	agent = DatabaseAgent("database.json")
-	folders = agent.get_folders("chou610")
-	print(folders)
+	print(agent.get_folders("chen5292"))
+
+	agent.organize_chat("4711bd47-26d2-45f9-aa98-6f821bfd56ee", "Assignment 1")
+	print(agent.get_folders("chen5292"))
+
+	agent.log_chat("4711bd47-26d2-45f9-aa98-6f821bfd56ee", "AI-Model", "Nice, how about you ?")
+	agent.log_chat("4711bd47-26d2-45f9-aa98-6f821bfd56ee", "chen5292", "How is the weather in lafayette ?")
+	print(agent.get_chat_history("4711bd47-26d2-45f9-aa98-6f821bfd56ee"))
