@@ -28,6 +28,7 @@ if __name__ == "__main__":
     # initialize chat history in table 'chat_logs'
     chat_logs_table = db.table("chat_logs")
     chat_logs_table.insert({"chat_id": "5439494f-b9be-4f81-b242-56eecc8c1841",
+                            "user_id": "chou610",
                             "messages": [
                                             {"timestamp": 1741287392.308209, "sender": "chen5292", "message": "How are you ?"},
                                             {"timestamp": 1741287392.308209, "sender": "AI-Model", "message": "I am fine, thank you !"},
