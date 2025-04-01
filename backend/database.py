@@ -16,9 +16,30 @@ class DatabaseAgent:
 
 	def register_user(self, username: str, email: str, password: str) -> bool:
 		""" Create a new entry of user in the database """
-		doc_id = self.user.insert({"user_id": username, "email": email, "password": password})
+		doc_id = self.users.insert({"user_id": username, "email": email, "password": password})
 		
-		# if user create success, setup default entry of session and folders
+		# create the default folder structure in chat_folders
+		self.chat_folders.insert({"user_id": username, "folders": [{"label": "Assignment 1", "chat_ids": []}, {"label": "Assignment 2", "chat_id": []}]})
+
+
+	def delete_user(self, username: str) -> bool:
+		""" remove a user entry from the database """
+		# check for user existance
+		user_entry = self.users.get(Query().user_id == username)
+		if not user_entry: return False
+
+		# delete the user account
+		self.users.remove(Query().user_id == username)
+
+		# delete all associated session token
+		self.sessions.remove(Query().user_id == username)
+
+		# delete chat folders
+		self.chat_folders.remove(Query().user_id == username)
+
+		# delete all chat logs created by user
+		self.chat_logs.remove(Query().user_id == username)
+		return True
 
 
 	def verify_user(self, username: str, password: str) -> bool:
@@ -29,10 +50,6 @@ class DatabaseAgent:
 		# check if the passwor match
 		if user.get("password") == password: return True
 		else: return False
-
-
-	def delete_user(self, username: str):
-		pass
 
 
 	def create_session(self, owner_id: str) -> str|None:
