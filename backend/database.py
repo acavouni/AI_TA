@@ -52,8 +52,8 @@ class DatabaseAgent:
 		else: return False
 
 
-	def create_session(self, owner_id: str) -> str|None:
-		""" Create an UUID-V4 token for the session """
+	def create_session(self, owner_id: str) -> tuple[str, datetime]|None:
+		""" Create an UUID-V4 token for the session, return tuple[token, expiration datetime] """
 		# verify whether the user exist before operation
 		if not self.users.contains(Query().user_id == owner_id): return None
 
@@ -66,10 +66,10 @@ class DatabaseAgent:
 
 		# insert the entry to the database
 		self.sessions.insert({"user_id": owner_id, "token": session_token, "expires_at": expire})
-		return session_token
+		return session_token, expiration_time
 
 
-	def termiante_session(self, owner_id: str, token: str) -> bool:
+	def terminate_session(self, owner_id: str, token: str) -> bool:
 		""" Termiante an UUID-V4 session token of user """
 		# check if the user & session exist in the database
 		removed_doc_id = self.sessions.remove((Query().user_id == owner_id) & (Query().token == token))
@@ -193,11 +193,7 @@ class DatabaseAgent:
 
 if __name__ == "__main__":
 	agent = DatabaseAgent("database.json")
-	print(agent.get_folders("chen5292"))
-
-	agent.organize_chat("4711bd47-26d2-45f9-aa98-6f821bfd56ee", "Assignment 1")
-	print(agent.get_folders("chen5292"))
-
-	agent.log_chat("4711bd47-26d2-45f9-aa98-6f821bfd56ee", "AI-Model", "Nice, how about you ?")
-	agent.log_chat("4711bd47-26d2-45f9-aa98-6f821bfd56ee", "chen5292", "How is the weather in lafayette ?")
-	print(agent.get_chat_history("4711bd47-26d2-45f9-aa98-6f821bfd56ee"))
+	token, expire = agent.create_session("chen5292")
+	print(token)
+	print(expire)
+	agent.terminate_session("chen5292", token)

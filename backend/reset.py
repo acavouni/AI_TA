@@ -22,8 +22,8 @@ if __name__ == "__main__":
 
     # initialize dummy char folders in table `chat_folders`
     chat_folders_table = db.table("chat_folders")
-    chat_folders_table.insert({"user_id": "chen5292", "folders": [{"label": "Assignment 1", "chat_ids": []}, {"label": "Assignment 2", "chat_id": []}]})
-    chat_folders_table.insert({"user_id": "chou610", "folders": [{"label": "Assignment 1", "chat_ids": ["5439494f-b9be-4f81-b242-56eecc8c1841"]}, {"label": "Assignment 2", "chat_id": []}]})
+    chat_folders_table.insert({"user_id": "chen5292", "folders": [{"label": "Assignment 1", "chat_ids": ["5439494f-b9be-4f81-b242-56eecc8c1841"]}, {"label": "Assignment 2", "chat_id": []}]})
+    chat_folders_table.insert({"user_id": "chou610", "folders": [{"label": "Assignment 1", "chat_ids": []}, {"label": "Assignment 2", "chat_id": []}]})
 
     # initialize chat history in table 'chat_logs'
     chat_logs_table = db.table("chat_logs")
