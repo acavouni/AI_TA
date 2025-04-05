@@ -27,7 +27,7 @@ def login():
 	token, expire = agent.create_session(username)
 
 	# set the CYK authentication token
-	response = make_response({"status": "Login Successful."}, 200)
+	response = make_response({"status": "Login Success."}, 200)
 	serializer = URLSafeSerializer(current_app.config['SECRET_KEY'])
 	signed_token = serializer.dumps({
 		"user_id": username,
@@ -48,12 +48,44 @@ def login():
 
 @app.route("/api/logout", methods=['POST'])
 def logout():
-	pass
+	""" Logout the current user """
+	try:
+		# extract the authentication token
+		cookie = request.cookies.get("cyk_token")
+		serializer = URLSafeSerializer(current_app.config['SECRET_KEY'])
+		token = serializer.loads(cookie)
+		user_id = token.get("user_id")
+		token = token.get("token")
+
+		# logout user
+		if agent.terminate_session(user_id, token):
+			return jsonify({"status": "Logout Success."}), 200
+		else:
+			return jsonify({"status": "Logout Failed."}), 403
+
+	except BadSignature:
+		return jsonify({"status": "Tampered or Invalid Signature in Token."}), 401
+
+	except Exception:
+		return jsonify({"status": "Unexpected Error while Verifying Token."}), 400
 
 
 @app.route("/api/register", methods=['POST'])
 def register():
-	pass
+	""" Register a new user on site """
+	ata = request.get_json(silent=True)
+	if not data: return jsonify({"status": "Invalid Format, Expected JSON."}), 400
+
+	# parse the request parameter
+	email = data.get("email")
+	username = data.get("user_id")
+	password = data.get("password")
+
+	# proceed on the user registration
+	if agent.register_user():
+		return jsonify({"status": "Register Success."}), 200
+	else: 
+		return jsonify({"status": "Register Failed."}), 409
 
 
 @app.route("/api/folders", methods=['GET'])
@@ -63,8 +95,6 @@ def get_folders():
 		# extract the authentication token
 		cookie = request.cookies.get("cyk_token")
 		serializer = URLSafeSerializer(current_app.config['SECRET_KEY'])
-
-		# parse the token with our master key
 		token = serializer.loads(cookie)
 		user_id = token.get("user_id")
 		token = token.get("token")
@@ -80,8 +110,7 @@ def get_folders():
 	except BadSignature:
 		return jsonify({"status": "Tampered or Invalid Signature in Token."}), 401
 
-	except Exception as ex:
-		print(ex)
+	except Exception:
 		return jsonify({"status": "Unexpected Error while Verifying Token."}), 400
 
 
