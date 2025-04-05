@@ -116,7 +116,34 @@ def get_folders():
 
 @app.route("/api/chat", methods=['GET'])
 def get_chat():
-	pass
+	""" Receive the chat history of a specific chat, pass argument as: /api/chat?id=<UUID-V4> """
+	# check if the chat_id to retrieve the data is passed in as GET argument
+	chat_id = request.args.get("id")
+	if not chat_id: return jsonify({"error": "Missing chat id parameter"}), 400
+
+	try:
+		# extract the authentication token
+		cookie = request.cookies.get("cyk_token")
+		serializer = URLSafeSerializer(current_app.config['SECRET_KEY'])
+		token = serializer.loads(cookie)
+		user_id = token.get("user_id")
+		token = token.get("token")
+
+		# verify whether the token is valid
+		if not agent.verify_session(user_id, token):
+			return jsonify({"status": "Invalid Access Token."}), 403
+
+		# retrieve chat information
+		chat_info = agent.get_chat_history(chat_id)
+		if not chat_info: return jsonify({"status": "Invalid Chat ID"}), 400
+		return jsonify(chat_info), 200
+
+	except BadSignature:
+		return jsonify({"status": "Tampered or Invalid Signature in Token."}), 401
+
+	except Exception:
+		return jsonify({"status": "Unexpected Error while Verifying Token."}), 400
+
 
 
 @app.route("/api/chat", methods=['POST'])
