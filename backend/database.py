@@ -16,10 +16,14 @@ class DatabaseAgent:
 
 	def register_user(self, username: str, email: str, password: str) -> bool:
 		""" Create a new entry of user in the database """
-		doc_id = self.users.insert({"user_id": username, "email": email, "password": password})
+		# check for duplciate user
+		existing = self.users.search((Query().user_id == username) | (Query().email == email))
+		if existing: return False 
 		
-		# create the default folder structure in chat_folders
+		# setup the user profile in the database
+		doc_id = self.users.insert({"user_id": username, "email": email, "password": password})
 		self.chat_folders.insert({"user_id": username, "folders": [{"label": "Assignment 1", "chat_ids": []}, {"label": "Assignment 2", "chat_id": []}]})
+		return True
 
 
 	def delete_user(self, username: str) -> bool:
@@ -193,7 +197,4 @@ class DatabaseAgent:
 
 if __name__ == "__main__":
 	agent = DatabaseAgent("database.json")
-	token, expire = agent.create_session("chen5292")
-	print(token)
-	print(expire)
-	agent.terminate_session("chen5292", token)
+	print(agent.register_user("newuser", "chen522@purdue.edu", "123"))
