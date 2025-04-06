@@ -11,11 +11,10 @@ agent = DatabaseAgent("database.json")
 
 @app.route("/api/login", methods=['POST'])
 def login():
-	""" User Login Authentication """
+	""" User Login Authentication, pass argument in request body in JSON format. """
+	# parse the request parameter
 	data = request.get_json(silent=True)
 	if not data: return jsonify({"status": "Invalid Format, Expected JSON."}), 400
-
-	# parse the request parameter
 	username = data.get("user_id")
 	password = data.get("password")
 
@@ -73,16 +72,15 @@ def logout():
 @app.route("/api/register", methods=['POST'])
 def register():
 	""" Register a new user on site """
-	ata = request.get_json(silent=True)
-	if not data: return jsonify({"status": "Invalid Format, Expected JSON."}), 400
-
 	# parse the request parameter
+	data = request.get_json(silent=True)
+	if not data: return jsonify({"status": "Invalid Format, Expected JSON."}), 400
 	email = data.get("email")
 	username = data.get("user_id")
 	password = data.get("password")
 
 	# proceed on the user registration
-	if agent.register_user():
+	if agent.register_user(username, email, password):
 		return jsonify({"status": "Register Success."}), 200
 	else: 
 		return jsonify({"status": "Register Failed."}), 409
@@ -112,6 +110,12 @@ def get_folders():
 
 	except Exception:
 		return jsonify({"status": "Unexpected Error while Verifying Token."}), 400
+
+
+@app.route("/api/new_chat", methods=['POST'])
+def new_chat():
+	""" Create a new chat for the logged in user """
+	pass
 
 
 @app.route("/api/chat", methods=['GET'])
@@ -145,10 +149,39 @@ def get_chat():
 		return jsonify({"status": "Unexpected Error while Verifying Token."}), 400
 
 
-
 @app.route("/api/chat", methods=['POST'])
 def log_chat():
-	pass
+	""" Log a message in the chat, pass argument in request body in JSON format. """
+	# parse the request parameter
+	data = request.get_json(silent=True)
+	if not data: return jsonify({"status": "Invalid Format, Expected JSON."}), 400
+	chat_id = data.get("chat_id")
+	sender = data.get("sender")
+	message = data.get("message")
+
+	try:
+		# extract the authentication token
+		cookie = request.cookies.get("cyk_token")
+		serializer = URLSafeSerializer(current_app.config['SECRET_KEY'])
+		token = serializer.loads(cookie)
+		user_id = token.get("user_id")
+		token = token.get("token")
+
+		# verify whether the token is valid
+		if not agent.verify_session(user_id, token):
+			return jsonify({"status": "Invalid Access Token."}), 403
+
+		# log the entry in database
+		if agent.log_chat(chat_id, sender, message):
+			return jsonify({"status": "Log Success."}), 200
+		else:
+			return jsonify({"status": "Log Failed."}), 404
+
+	except BadSignature:
+		return jsonify({"status": "Tampered or Invalid Signature in Token."}), 401
+
+	except Exception:
+		return jsonify({"status": "Unexpected Error while Verifying Token."}), 400
 
 
 
