@@ -197,4 +197,5 @@ class DatabaseAgent:
 
 if __name__ == "__main__":
 	agent = DatabaseAgent("database.json")
-	print(agent.register_user("newuser", "chen522@purdue.edu", "123"))
+	agent.organize_chat("5439494f-b9be-4f81-b242-56eecc8c1841", "Assignment 2")
+	print(agent.get_folders("chou610"))

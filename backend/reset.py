@@ -22,8 +22,8 @@ if __name__ == "__main__":
 
     # initialize dummy char folders in table `chat_folders`
     chat_folders_table = db.table("chat_folders")
-    chat_folders_table.insert({"user_id": "chen5292", "folders": [{"label": "Assignment 1", "chat_ids": ["5439494f-b9be-4f81-b242-56eecc8c1841"]}, {"label": "Assignment 2", "chat_id": []}]})
-    chat_folders_table.insert({"user_id": "chou610", "folders": [{"label": "Assignment 1", "chat_ids": []}, {"label": "Assignment 2", "chat_id": []}]})
+    chat_folders_table.insert({"user_id": "chen5292", "folders": [{"label": "Assignment 1", "chat_ids": []}, {"label": "Assignment 2", "chat_id": []}]})
+    chat_folders_table.insert({"user_id": "chou610", "folders": [{"label": "Assignment 1", "chat_ids": ["5439494f-b9be-4f81-b242-56eecc8c1841"]}, {"label": "Assignment 2", "chat_id": []}]})
 
     # initialize chat history in table 'chat_logs'
     chat_logs_table = db.table("chat_logs")
@@ -35,6 +35,12 @@ if __name__ == "__main__":
                                             {"timestamp": 1741287392.308209, "sender": "chen5292", "message": "How is the weather like in Lafayette ?"},
                                             {"timestamp": 1741287395.279668, "sender": "AI-Model", "message": "It will probably rain in the afternoon !!"}
                                         ]
+                            })
+
+    chat_logs_table.insert({
+                            "chat_id": "9304466d-2b24-4a31-af76-5812a7289933",
+                            "user_id": "chen5292",
+                            "messages": []
                             })
 
     # dump the whole database
