@@ -261,7 +261,10 @@ def delete_chat():
 			return jsonify({"status": "Invalid Access Token."}), 403
 
 		# delete the chat
-		if agent.delete_chat(chat_id)
+		if agent.delete_chat(chat_id):
+			return jsonify({"status": "Deletion Success."}), 200
+		else:
+			return jsonify({"status": "Deletion Failed."}), 404
 
 	except BadSignature:
 		return jsonify({"status": "Tampered or Invalid Signature in Token."}), 401
