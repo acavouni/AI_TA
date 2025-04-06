@@ -112,16 +112,72 @@ def get_folders():
 		return jsonify({"status": "Unexpected Error while Verifying Token."}), 400
 
 
+@app.route("/api/organize", methods=['POST'])
+def organize_chat():
+	""" Organize the chat into a specifc folder """
+	# parse the request parameter
+	data = request.get_json(silent=True)
+	if not data: return jsonify({"status": "Invalid Format, Expected JSON."}), 400
+	chat_id = data.get("chat_id")
+	folder = data.get("folder")
+
+	try:
+		# extract the authentication token
+		cookie = request.cookies.get("cyk_token")
+		serializer = URLSafeSerializer(current_app.config['SECRET_KEY'])
+		token = serializer.loads(cookie)
+		user_id = token.get("user_id")
+		token = token.get("token")
+
+		# verify whether the token is valid
+		if not agent.verify_session(user_id, token):
+			return jsonify({"status": "Invalid Access Token."}), 403
+
+		# organize chat into target folder
+		if agent.organize_chat(chat_id, folder):
+			return jsonify({"status": "Organize Success."}), 200
+		else:
+			return jsonify({"status": "Organize Failed."}), 404
+
+	except BadSignature:
+		return jsonify({"status": "Tampered or Invalid Signature in Token."}), 401
+
+	except Exception as ex:
+		print(ex)
+		return jsonify({"status": "Unexpected Error while Verifying Token."}), 400
+
+
 @app.route("/api/new_chat", methods=['POST'])
 def new_chat():
 	""" Create a new chat for the logged in user """
-	pass
+	try:
+		# extract the authentication token
+		cookie = request.cookies.get("cyk_token")
+		serializer = URLSafeSerializer(current_app.config['SECRET_KEY'])
+		token = serializer.loads(cookie)
+		user_id = token.get("user_id")
+		token = token.get("token")
+
+		# verify whether the token is valid
+		if not agent.verify_session(user_id, token):
+			return jsonify({"status": "Invalid Access Token."}), 403
+
+		# create a new chat for the user
+		chat_id = agent.create_chat(user_id)
+		return jsonify({"chat_id": chat_id}), 200
+
+	except BadSignature:
+		return jsonify({"status": "Tampered or Invalid Signature in Token."}), 401
+
+	except Exception as ex:
+		print(ex)
+		return jsonify({"status": "Unexpected Error while Verifying Token."}), 400
 
 
 @app.route("/api/chat", methods=['GET'])
 def get_chat():
 	""" Receive the chat history of a specific chat, pass argument as: /api/chat?id=<UUID-V4> """
-	# check if the chat_id to retrieve the data is passed in as GET argument
+	# parse the request parameter
 	chat_id = request.args.get("id")
 	if not chat_id: return jsonify({"error": "Missing chat id parameter"}), 400
 
@@ -176,6 +232,36 @@ def log_chat():
 			return jsonify({"status": "Log Success."}), 200
 		else:
 			return jsonify({"status": "Log Failed."}), 404
+
+	except BadSignature:
+		return jsonify({"status": "Tampered or Invalid Signature in Token."}), 401
+
+	except Exception:
+		return jsonify({"status": "Unexpected Error while Verifying Token."}), 400
+
+
+@app.route("/api/chat", methods=['DELETE'])
+def delete_chat():
+	""" Delete a specific chat_id, pass argument in request body in JSON format. """
+	# parse the request parameter
+	data = request.get_json(silent=True)
+	if not data: return jsonify({"status": "Invalid Format, Expected JSON."}), 400
+	chat_id = data.get("chat_id")
+
+	try:
+		# extract the authentication token
+		cookie = request.cookies.get("cyk_token")
+		serializer = URLSafeSerializer(current_app.config['SECRET_KEY'])
+		token = serializer.loads(cookie)
+		user_id = token.get("user_id")
+		token = token.get("token")
+
+		# verify whether the token is valid
+		if not agent.verify_session(user_id, token):
+			return jsonify({"status": "Invalid Access Token."}), 403
+
+		# delete the chat
+		if agent.delete_chat(chat_id)
 
 	except BadSignature:
 		return jsonify({"status": "Tampered or Invalid Signature in Token."}), 401
