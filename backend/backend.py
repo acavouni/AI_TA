@@ -3,8 +3,11 @@ from typing import Any
 from database import DatabaseAgent
 from itsdangerous import URLSafeSerializer, BadSignature
 from flask import Flask, request, make_response, jsonify, current_app
+from flask_cors import CORS #added by paul
+import json
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True) #added by paul
 app.config['SECRET_KEY'] = secrets.token_urlsafe(32)
 agent = DatabaseAgent("database.json")
 
@@ -23,6 +26,7 @@ def login():
 		return jsonify({"status": "Invalid Login Credential."}), 401
 
 	# verification passed, give out session key
+	agent.terminate_all_sessions(username)
 	token, expire = agent.create_session(username)
 
 	# set the CYK authentication token
@@ -271,6 +275,51 @@ def delete_chat():
 
 	except Exception:
 		return jsonify({"status": "Unexpected Error while Verifying Token."}), 400
+
+
+@app.route("/api/delete-user", methods=["DELETE"])
+def delete_user():
+    data = request.get_json(silent=True)
+    if not data or "user_id" not in data:
+        return jsonify({"status": "Invalid Format, expected user_id in JSON."}), 400
+
+    user_to_delete = data["user_id"]
+
+    try:
+        with open("database.json", "r") as f:
+            db = json.load(f)
+
+        users = db.get("users", {})
+        user_found = None
+
+        # Find the matching user entry
+        for key, user in users.items():
+            if user.get("user_id") == user_to_delete:
+                user_found = key
+                break
+
+        if user_found is None:
+            return jsonify({"status": "User not found."}), 404
+
+        # Delete user entry
+        del db["users"][user_found]
+
+        # Delete associated sessions
+        db["sessions"] = {k: v for k, v in db.get("sessions", {}).items() if v.get("user_id") != user_to_delete}
+
+        # Delete chat folders
+        db["chat_folders"] = {k: v for k, v in db.get("chat_folders", {}).items() if v.get("user_id") != user_to_delete}
+
+        # Delete chat logs
+        db["chat_logs"] = {k: v for k, v in db.get("chat_logs", {}).items() if v.get("user_id") != user_to_delete}
+
+        with open("database.json", "w") as f:
+            json.dump(db, f, indent=2)
+
+        return jsonify({"status": "User deleted successfully."}), 200
+
+    except Exception as e:
+        return jsonify({"status": f"Error occurred: {str(e)}"}), 500
 
 
 

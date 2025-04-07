@@ -41,7 +41,7 @@ const socialLinks = [
 
 function AuthModal({ isOpen, onClose, isSignUp, setIsSignUp }) {
     if (!isOpen) return null;
-
+        
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-secondary rounded-lg p-8 relative max-w-md w-full mx-4">
@@ -59,48 +59,115 @@ function AuthModal({ isOpen, onClose, isSignUp, setIsSignUp }) {
                     {isSignUp ? 'Create Account' : 'Welcome Back'}
                 </h2>
 
-                <form className="space-y-4">
+
+
+                
+                <form
+                    className="space-y-4"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+
+                        const formData = new FormData(e.target);
+                        const email = formData.get("email");
+                        const username = formData.get("username");
+                        const password = formData.get("password");
+                        const confirmPassword = formData.get("confirmPassword");
+
+                        if (isSignUp) {
+                        if (!email || !username || !password || !confirmPassword) {
+                            alert("Please fill out all fields.");
+                            return;
+                        }
+                        if (password !== confirmPassword) {
+                            alert("Passwords do not match.");
+                            return;
+                        }
+
+                        fetch("http://localhost:8888/api/register", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ user_id: username, email, password }),
+                        })
+                            .then((res) => res.json())
+                            .then((data) => {
+                            if (data.status === "Register Success.") {
+                                alert("Account created! Please log in.");
+                                setIsSignUp(false);
+                            } else {
+                                alert("Registration failed: " + data.status);
+                            }
+                            });
+                        } else {
+                        const loginUsername = formData.get("username");
+                        const loginPassword = formData.get("password");
+
+                        fetch("http://localhost:8888/api/login", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            credentials: "include",
+                            body: JSON.stringify({ user_id: loginUsername, password: loginPassword }),
+                        })
+                            .then((res) => res.json())
+                            .then((data) => {
+                            if (data.status === "Login Success.") {
+                                alert("Login successful!");
+                                onClose();
+                                login({ user_id: loginUsername }); // <--- This must be defined
+                            } else {
+                                alert("Login failed: " + data.status);
+                            }
+                            });
+                        }
+                    }}
+                    >
                     {isSignUp && (
                         <div>
-                            <label className="block text-gold mb-2">Email</label>
-                            <input 
-                                type="email" 
-                                className="w-full p-3 rounded-lg bg-primary border-2 border-gold/30 focus:border-gold focus:outline-none text-white"
-                            />
-                        </div>
-                    )}
-                    {!isSignUp && (
-                        <div>
-                            <label className="block text-gold mb-2">Username</label>
-                            <input 
-                                type="text" 
-                                className="w-full p-3 rounded-lg bg-primary border-2 border-gold/30 focus:border-gold focus:outline-none text-white"
-                            />
-                        </div>
-                    )}
-                    <div>
-                        <label className="block text-gold mb-2">Password</label>
-                        <input 
-                            type="password" 
+                        <label className="block text-gold mb-2">Email</label>
+                        <input
+                            name="email"
+                            type="email"
                             className="w-full p-3 rounded-lg bg-primary border-2 border-gold/30 focus:border-gold focus:outline-none text-white"
                         />
-                    </div>
-                    {isSignUp && (
-                        <div>
-                            <label className="block text-gold mb-2">Confirm Password</label>
-                            <input 
-                                type="password" 
-                                className="w-full p-3 rounded-lg bg-primary border-2 border-gold/30 focus:border-gold focus:outline-none text-white"
-                            />
                         </div>
                     )}
-                    <button 
+
+                    <div>
+                        <label className="block text-gold mb-2">Username</label>
+                        <input
+                        name="username"
+                        type="text"
+                        className="w-full p-3 rounded-lg bg-primary border-2 border-gold/30 focus:border-gold focus:outline-none text-white"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-gold mb-2">Password</label>
+                        <input
+                        name="password"
+                        type="password"
+                        className="w-full p-3 rounded-lg bg-primary border-2 border-gold/30 focus:border-gold focus:outline-none text-white"
+                        />
+                    </div>
+
+                    {isSignUp && (
+                        <div>
+                        <label className="block text-gold mb-2">Confirm Password</label>
+                        <input
+                            name="confirmPassword"
+                            type="password"
+                            className="w-full p-3 rounded-lg bg-primary border-2 border-gold/30 focus:border-gold focus:outline-none text-white"
+                        />
+                        </div>
+                    )}
+
+                    <button
                         type="submit"
                         className="w-full py-3 bg-gold text-black rounded-lg font-semibold hover:bg-gold/90 transition-colors"
                     >
-                        {isSignUp ? 'Sign Up' : 'Log In'}
+                        {isSignUp ? "Sign Up" : "Log In"}
                     </button>
-                </form>
+</form>
+
 
                 <div className="mt-4 text-center">
                     {!isSignUp && (

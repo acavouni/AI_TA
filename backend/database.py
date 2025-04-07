@@ -79,6 +79,10 @@ class DatabaseAgent:
 		removed_doc_id = self.sessions.remove((Query().user_id == owner_id) & (Query().token == token))
 		return True if removed_doc_id else False
 
+	def terminate_all_sessions(self, user_id: str) -> bool:
+		""" Remove all session tokens for the given user_id """
+		removed = self.sessions.remove(Query().user_id == user_id)
+		return bool(removed)
 
 	def verify_session(self, owner_id: str, token: str) -> bool:
 		""" Verify a session token of the user """
